@@ -79,7 +79,7 @@ http://127.0.0.1:8000/show_recipes_without_product/<product_id>/
 python manage.py createsuperuser
 ```
 
-Панель администратора доступна по адресу:
+Перейдите в админку и создайте продукты и рецепты:
 
 ```bash
 http://127.0.0.1:8000/admin/
