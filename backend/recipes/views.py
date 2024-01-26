@@ -3,6 +3,7 @@ from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404
 from .models import Recipe, Product, RecipeProduct
+from .serializers import RecipeSerializer
 from django.shortcuts import render
 
 
@@ -39,17 +40,10 @@ def cook_recipe(request, recipe_id):
 
 @api_view(['GET'])
 def show_recipes_without_product(request, product_id):
-    try:
-        product_id = int(product_id)
-    except ValueError:
-        return Response({'status': 'error', 'message': 'Invalid product ID'}, status=status.HTTP_400_BAD_REQUEST)
+    product = get_object_or_404(Product, id=product_id)
+    recipes_without_product = Recipe.objects.exclude(recipeproduct__product__id=product_id).distinct()
 
-    # Получим рецепты, которые не связаны с указанным продуктом
-    recipes_without_product = Recipe.objects.exclude(recipeproduct__product__id=product_id)
+    serializer = RecipeSerializer(recipes_without_product, many=True)
 
-    # Добавим условие для отсеивания рецептов, где вес продукта больше или равен 10 граммам
-    recipes_without_product = [recipe for recipe in recipes_without_product if all(rp.weight < 10 for rp in recipe.recipeproduct_set.filter(product__id=product_id))]
-
-    # Возвращаем HTML-страницу с использованием шаблона
-    return render(request, 'show_recipes_without_product.html', {'recipes': recipes_without_product})
+    return render(request, 'show_recipes_without_product.html', {'recipes': serializer.data})
 
