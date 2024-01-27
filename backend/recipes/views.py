@@ -2,7 +2,7 @@ from rest_framework.decorators import api_view
 from rest_framework.response import Response
 from rest_framework import status
 from django.shortcuts import get_object_or_404, render
-from django.db.models import Sum, Case, When, IntegerField
+from django.db.models import Sum, Case, When, IntegerField, F
 from django.db import transaction
 from .models import Recipe, Product, RecipeProduct
 
@@ -34,13 +34,12 @@ def add_product_to_recipe(request, recipe_id, product_id, weight):
 @transaction.atomic
 def cook_recipe(request, recipe_id):
     recipe = get_object_or_404(Recipe, id=recipe_id)
-    products = recipe.products.all()
 
     try:
         with transaction.atomic():
-            for product in products:
-                product.cooked += 1
-                product.save()
+            for product in recipe.products.all():
+                product.cooked = F('cooked') + 1
+                product.save(update_fields=['cooked'])
     except Exception as e:
         return Response({'status': 'error', 'message': str(e)}, status=status.HTTP_500_INTERNAL_SERVER_ERROR)
 
